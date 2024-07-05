@@ -1,0 +1,10 @@
+from pyspark.sql.functions import *
+movie_schema = 'movieid int, title string, genres string'
+ratings_schema = 'userid int, movieid int, rating float, `timestamp` int'
+rating_df = spark.read.csv('/user/itv010259/hive_datasets/ratings.csv', header= True, schema = ratings_schema)
+movie_df = spark.read.csv('/user/itv010259/hive_datasets/movies.csv', header= True, schema = movie_schema)
+movie_df.show(5, truncate= False)
+rating_df.show(5, truncate= False)
+new_df = rating_df.groupBy('movieid').agg(count('userid').alias('totalRatings'), avg('rating').alias('averageRating')).filter('totalRatings>30')
+final_df = new_df.join(movie_df, ['movieid']).orderBy(desc('averageRating')).limit(10)
+final_df.drop('genres').show(truncate= False)
